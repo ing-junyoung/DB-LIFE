@@ -19,25 +19,12 @@ st.markdown(
     label.css-16idsys, label.css-1p3cay5 {
         white-space: nowrap;
     }
-    /* 슬라이더 색상 통일 */
-    div[data-baseweb="slider"] .css-14xtw13, div[data-baseweb="slider"] .css-1jd1mkm {
-        background: #04b504 !important;   /* bar 색 */
-    }
-    div[data-baseweb="slider"] .css-1q9h3x9 {
-        background: #04b504 !important;   /* 활성 bar */
-    }
-    div[data-baseweb="slider"] .css-1cypc7u, div[data-baseweb="slider"] .css-1n76uvr {
-        border-color: #04b504 !important; /* point 테두리 */
-    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
 def render_title_with_logo_right(logo_path: str, title_text: str, logo_width: int = 100):
-    """
-    왼쪽: 타이틀 / 오른쪽: 로고
-    """
     try:
         if not os.path.exists(logo_path):
             raise FileNotFoundError(logo_path)
@@ -55,7 +42,6 @@ def render_title_with_logo_right(logo_path: str, title_text: str, logo_width: in
     except Exception:
         st.title(f"📊 {title_text}")
 
-# 사용 예시
 render_title_with_logo_right(
     logo_path="DB_logo.png",
     title_text="당월 수수료 계산기",
@@ -94,7 +80,6 @@ STRATEGIC_HEALTH = {
 # 세션 상태
 # ─────────────────────────────────────
 if "entries" not in st.session_state:
-    # [{id, product, pay_year, pay_year_key, premium_key, premium}]
     st.session_state.entries = []
 if "entry_seq" not in st.session_state:
     st.session_state.entry_seq = 0
@@ -102,7 +87,7 @@ if "product_selector" not in st.session_state:
     st.session_state.product_selector = "— 상품을 선택하세요 —"
 
 # ─────────────────────────────────────
-# 유틸: 통화 입력(실시간 3자리 콤마) — on_change 콜백 방식
+# 유틸: 통화 입력(실시간 3자리 콤마)
 # ─────────────────────────────────────
 def _format_currency(text_key: str):
     raw = st.session_state.get(text_key, "")
@@ -111,11 +96,6 @@ def _format_currency(text_key: str):
     st.session_state[text_key] = f"{num:,}" if num else ""
 
 def currency_input(label: str, key: str, default: int = 0, label_visibility: str = "visible") -> int:
-    """
-    - 사용자는 '50000'처럼 입력해도 됨
-    - on_change 콜백으로 자동 콤마 포맷
-    - 함수는 정수(int)를 반환
-    """
     text_key = f"{key}_text"
     if text_key not in st.session_state:
         st.session_state[text_key] = f"{default:,}" if isinstance(default, int) and default else ""
@@ -130,29 +110,22 @@ def currency_input(label: str, key: str, default: int = 0, label_visibility: str
     return int(digits) if digits else 0
 
 # ─────────────────────────────────────
-# 기본 정보 입력 (+ 소제목/간격/기준 유지율 계산)
+# 기본 정보 입력
 # ─────────────────────────────────────
 st.subheader("📝 기본 정보 입력")
 SP(25)
 
-# 위임년월 입력
 st.markdown("<div style='font-size:1.08rem; font-weight:700;'>✔️위임년월 입력</div>", unsafe_allow_html=True)
 SP(12)
 
 years = list(range(2025, 1988, -1))  # 2025 ~ 1989
 
-# 4열: [연도][아주작은 간격][월][오른쪽 큰 흡수여백]
 c_year, c_gap, c_month, c_fill = st.columns([0.22, 0.02, 0.18, 0.58])
 
 with c_year:
     y_col, _ = st.columns([0.45, 0.55])
     with y_col:
-        year = st.selectbox(
-            "위임년도",
-            options=years,
-            index=0,
-            key="year_select"
-        )
+        year = st.selectbox("위임년도", options=years, index=0, key="year_select")
 
 with c_gap:
     st.write("")
@@ -160,17 +133,11 @@ with c_gap:
 with c_month:
     m_col, _ = st.columns([0.45, 0.55])
     with m_col:
-        month = st.selectbox(
-            "위임월",
-            options=list(range(1, 13)),
-            index=7,
-            key="month_select"
-        )
+        month = st.selectbox("위임월", options=list(range(1, 13)), index=7, key="month_select")
 
 with c_fill:
     st.write("")
 
-# CSS 적용 (selectbox 폭)
 st.markdown("""
 <style>
 div[data-testid="stSelectbox"]:has(#year_select) { width: 120px !important; }
@@ -178,13 +145,11 @@ div[data-testid="stSelectbox"]:has(#month_select) { width: 90px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# 표준활동 입력
 SP(20)
 st.markdown("<div style='font-size:1.08rem; font-weight:700;'>✔️표준활동 입력</div>", unsafe_allow_html=True)
 SP(8)
 std_activity = st.checkbox("당월 표준활동 달성 여부", value=False)
 
-# 유지율 입력
 SP(20)
 st.markdown("<div style='font-size:1.08rem; font-weight:700;'>✔️유지율 입력</div>", unsafe_allow_html=True)
 SP(8)
@@ -202,7 +167,7 @@ def _std_retention(month_idx: int):
     else:
         return 85
 
-_std_now_dynamic = _std_retention(contract_months_now)  # 당월 기준 유지율(동적)
+_std_now_dynamic = _std_retention(contract_months_now)
 _std_13 = _std_retention(13)
 _std_25 = _std_retention(25)
 
@@ -249,16 +214,16 @@ st.markdown("<div style='font-size:1.08rem; font-weight:700;'>✔️유효환산
 SP(10)
 cA, cB, cC = st.columns([1, 1, 1])
 with cA:
-    refund_p = currency_input("당월 예상 환수성적 (* 청철/반송/무효/해지)", key="refund_p", default=0)  # P단위
+    refund_p = currency_input("당월 예상 환수성적 (* 청철/반송/무효/해지)", key="refund_p", default=0)
 with cB:
-    refund_amt = currency_input("당월 예상 환수금 (* 모집+성과1+초기2 환수금)", key="refund_amt", default=0)  # 원단위
+    refund_amt = currency_input("당월 예상 환수금 (* 모집+성과1+초기2 환수금)", key="refund_amt", default=0)
 with cC:
     direct_recruits = st.number_input("당월 직도입 인원(명)", min_value=0, max_value=99, value=0, step=1)
 
 st.markdown("---")
 
 # ─────────────────────────────────────
-# 상품 선택 → 자동 추가 (중복 허용, 목록 고정)
+# 상품 선택 → 자동 추가
 # ─────────────────────────────────────
 options = ["— 상품을 선택하세요 —"] + list(PRODUCTS.keys())
 
@@ -278,27 +243,18 @@ def on_select_change():
         })
         st.session_state.product_selector = options[0]
 
-st.markdown(
-    "<div style='font-size:1.08rem; font-weight:700; color:#000000;'>✔️상품 선택</div>",
-    unsafe_allow_html=True
-)
+st.markdown("<div style='font-size:1.08rem; font-weight:700; color:#000000;'>✔️상품 선택</div>", unsafe_allow_html=True)
 st.caption("※ 선택 즉시 아래에 계약이 추가됩니다")
-st.selectbox(
-    "",
-    options=options,
-    key="product_selector",
-    on_change=on_select_change,
-)
+st.selectbox("", options=options, key="product_selector", on_change=on_select_change)
 
 # ─────────────────────────────────────
-# 등록된 계약 렌더링  ✅ 삭제 버튼 정렬 고정
+# 등록된 계약 렌더링
 # ─────────────────────────────────────
 SP(10)
 st.subheader("🧾 상품 목록")
 if not st.session_state.entries:
     st.info("상품을 선택하면 아래에 계약이 추가됩니다. 동일 상품을 여러 건 추가할 수 있습니다.")
 else:
-    # 헤더 행
     h1, h2, h3, h4 = st.columns([5.2, 1.6, 1.8, 1.1])
     with h1: st.markdown("**상품명**")
     with h2: st.markdown("**납입년도**")
@@ -342,7 +298,6 @@ else:
         with c4:
             if st.button("🗑 삭제", key=f"del_{e['id']}", use_container_width=True):
                 remove_id = e["id"]
-
         st.markdown("")
 
     if remove_id is not None:
@@ -355,27 +310,12 @@ if st.button("📌 계산하기"):
     st.divider()
     summary_placeholder = st.container()
 
-    # 유지율 보정 계수(일반: 상/하한 모두 반영)
+    # 유지율 보정 계수
     def retention_factor(user_rate: int, standard_rate):
         if standard_rate is None:
             return 1.0
         delta = user_rate - standard_rate
-        if delta >= 10:
-            return 1.20
-        elif delta >= 5:
-            return 1.10
-        elif delta >= 0:
-            return 1.00
-        elif delta > -5:
-            return 0.85
-        else:
-            return 0.70
-
-    # 1차년 표시용 유지율 보정(감소만 반영)
-    def retention_factor_firstyear_display(user_rate: int, standard_rate):
-        if standard_rate is None:
-            return 1.0
-        delta = user_rate - standard_rate
+        # 1차년 수수료는 +우대 없음 / -5% 구간만 반영(요약표에서 적용)
         if delta >= 0:
             return 1.00
         elif delta > -5:
@@ -383,52 +323,46 @@ if st.button("📌 계산하기"):
         else:
             return 0.70
 
-    # 성과수수료 지급률(1~12차월)
-    def performance_rate_1_12(total_converted: float) -> float:
-        if total_converted >= 10_000_000:
-            return 0.75
-        elif total_converted >= 5_000_000:
-            return 0.72
-        elif total_converted >= 2_000_000:
-            return 0.70
-        elif total_converted >= 1_000_000:
-            return 0.60
-        elif total_converted >= 700_000:
-            return 0.35
-        else:
-            return 0.00
+    # ▶▶ 성과수수료 지급률 테이블 (요청안 반영)
+    def performance_rate_by_months(months: int, eff: float) -> float:
+        """
+        months: 위임 차월(1=1차월)
+        eff   : 유효환산P
+        반환  : 지급률(0.0~0.9), eff < 700,000 이면 0.0
+        """
+        if eff < 700_000:
+            return 0.0
 
-    # (임시) 13개월 이후 구간
-    def performance_rate_general(months: int, total_converted: float) -> float:
+        # 금액 구간: 10M, 5M, 2M, 1M, 0.7M 이상
         if months <= 12:
-            return performance_rate_1_12(total_converted)
-        if months <= 24:
-            if total_converted >= 10_000_000:
-                return 0.70
-            elif total_converted >= 7_000_000:
-                return 0.65
-            elif total_converted >= 3_000_000:
-                return 0.60
-            else:
-                return 0.55
+            # 1~12차월
+            if eff >= 10_000_000: return 0.75
+            if eff >= 5_000_000:  return 0.72
+            if eff >= 2_000_000:  return 0.70
+            if eff >= 1_000_000:  return 0.60
+            # eff >= 700_000
+            return 0.35
+        elif months <= 24:
+            # 13~24차월
+            if eff >= 10_000_000: return 0.80
+            if eff >= 5_000_000:  return 0.77
+            if eff >= 2_000_000:  return 0.75
+            if eff >= 1_000_000:  return 0.65
+            return 0.40
         elif months <= 36:
-            if total_converted >= 10_000_000:
-                return 0.75
-            elif total_converted >= 7_000_000:
-                return 0.70
-            elif total_converted >= 3_000_000:
-                return 0.65
-            else:
-                return 0.60
+            # 25~36차월
+            if eff >= 10_000_000: return 0.85
+            if eff >= 5_000_000:  return 0.82
+            if eff >= 2_000_000:  return 0.80
+            if eff >= 1_000_000:  return 0.70
+            return 0.45
         else:
-            if total_converted >= 10_000_000:
-                return 0.80
-            elif total_converted >= 7_000_000:
-                return 0.75
-            elif total_converted >= 3_000_000:
-                return 0.70
-            else:
-                return 0.65
+            # 37차월 이상
+            if eff >= 10_000_000: return 0.90
+            if eff >= 5_000_000:  return 0.87
+            if eff >= 2_000_000:  return 0.85
+            if eff >= 1_000_000:  return 0.75
+            return 0.50
 
     # 총 환산보험료(모집) 합산
     total_converted_raw = 0
@@ -436,15 +370,16 @@ if st.button("📌 계산하기"):
         rate = PRODUCTS[e["product"]] / 100
         total_converted_raw += e["premium"] * rate
 
-    # ▶ 유효환산P = 모집환산P 합 - 당월 예상 환수성적(P)
+    # 유효환산P
     effective_converted = max(0, total_converted_raw - refund_p)
 
     # 모집 시점 위임차월
     today = datetime.today()
     contract_months = (today.year - year) * 12 + (today.month - month) + 1
 
-    # 성과수수료 기준율(Rbase) — ※ 유효환산P로 산정
-    base_rate = performance_rate_general(contract_months, effective_converted)
+    # 성과수수료 기준율(Rbase) — ※ 유효환산P·차월별 테이블로 산정
+    base_rate_raw = performance_rate_by_months(contract_months, effective_converted)
+    base_rate = base_rate_raw  # 이후 유지율/직도입 우대는 표기·산정 시 별도로 반영
 
     # 초기정착2 전제조건
     cond_std = bool(std_activity)
@@ -452,18 +387,15 @@ if st.button("📌 계산하기"):
     cond_amt_init2 = effective_converted >= 1_000_000
     eligible_init2 = cond_std and cond_month and cond_amt_init2
 
-    # 초기정착2 최대지급률(모집 1~12차월 대상)
+    # 초기정착2 최대지급률(모집 1~12차월 대상 = 75%)
     Rmax = 0.75
-    delta_R = max(0.0, Rmax - base_rate) if eligible_init2 else 0.0
+    delta_R_raw = max(0.0, Rmax - base_rate) if eligible_init2 else 0.0
 
-    # 시점별 보정계수(금액계산용)
+    # 시점별 보정계수(요약/1차년은 -구간만, +우대 없음)
     _std_now_dynamic_calc = _std_retention(contract_months)
     f1  = retention_factor(retention_1st, _std_now_dynamic_calc)
-    f13 = retention_factor(retention_13th, _std_13)
-    f25 = retention_factor(retention_25th, _std_25)
-
-    # 표시용 1차년 보정계수(요약표)
-    f1_first = retention_factor_firstyear_display(retention_1st, _std_now_dynamic)
+    f13 = retention_factor(retention_13th, _std_13)  # 2차년 계산용
+    f25 = retention_factor(retention_25th, _std_25)  # 3차년 계산용
 
     # 전략건강 보너스 단가 산정용 건수
     def strategic_count(premium: int) -> float:
@@ -492,18 +424,6 @@ if st.button("📌 계산하기"):
 
     sh_unit = per_unit_bonus(total_sh_count)
 
-    # 직도입 우대(%p) — 성과수수료1 전용
-    def direct_bonus_points(n: int) -> float:
-        if n >= 3:
-            return 0.15
-        elif n == 2:
-            return 0.10
-        elif n == 1:
-            return 0.05
-        return 0.0
-
-    dr_bonus = direct_bonus_points(direct_recruits)
-
     # 상품별 계산
     results = []
     sum_recruit = sum_perf1 = sum_init2_1 = sum_sh_bonus = 0
@@ -515,16 +435,30 @@ if st.button("📌 계산하기"):
         converted = premium * (PRODUCTS[prod] / 100)
         y1, y2, y3 = converted * 0.6, converted * 0.2, converted * 0.2
 
-        # 성과수수료: 성과1에만 직도입 우대 가산 (곱 아님)
-        perf1_effective_rate = (base_rate * f1) + dr_bonus
-        perf1 = y1 * perf1_effective_rate
+        # 직도입 우대(성과1 한정)
+        if direct_recruits >= 3:
+            dr_bonus = 0.15
+        elif direct_recruits == 2:
+            dr_bonus = 0.10
+        elif direct_recruits == 1:
+            dr_bonus = 0.05
+        else:
+            dr_bonus = 0.0
+
+        # 성과수수료
+        # 성과1: (base_rate * f1) + 직도입 우대(p) — 단, base_rate가 0이면 우대 미적용
+        perf1_rate_effective = (base_rate * f1) + (dr_bonus if base_rate > 0 else 0.0)
+        perf1 = y1 * perf1_rate_effective
+
+        # 성과2/3: 유지율 보정만
         perf2 = y2 * base_rate * f13
         perf3 = y3 * base_rate * f25
 
         # 초기정착2
-        init2_1 = y1 * delta_R * f1
-        init2_2 = y2 * delta_R * f13
-        init2_3 = y3 * delta_R * f25
+        init2_rate_effective_1 = delta_R_raw * f1
+        init2_1 = y1 * init2_rate_effective_1
+        init2_2 = y2 * (delta_R_raw * f13)
+        init2_3 = y3 * (delta_R_raw * f25)
 
         # 유지수수료(월)
         retention1_amt = y2 / 12
@@ -553,7 +487,7 @@ if st.button("📌 계산하기"):
             "sh_bonus": sh_bonus,
         })
 
-    # ▶ 정착보장 수수료 계산
+    # ▶ 정착보장 수수료
     def guarantee_amount_base(effP: int) -> int:
         if effP >= 5_000_000: return 5_000_000
         if effP >= 4_000_000: return 4_500_000
@@ -568,8 +502,8 @@ if st.button("📌 계산하기"):
     add_guarantee = 1_000_000 if direct_recruits == 1 else (2_000_000 if direct_recruits >= 2 else 0)
     final_guarantee = base_guarantee + add_guarantee
 
-    # 대상조건(정착보장): 1~12차월, 표준활동, 당월 유지율 ≥ 기준, 보장금액>0
-    cond_ret = (_std_now_dynamic is None) or (retention_1st >= _std_now_dynamic)  # None이면 통과
+    # 대상조건(정착보장)
+    cond_ret = (_std_now_dynamic is None) or (retention_1st >= _std_now_dynamic)
     eligible_settle = (contract_months <= 12) and std_activity and cond_ret and (final_guarantee > 0)
 
     # 제반수수료(환수 반영)
@@ -584,49 +518,78 @@ if st.button("📌 계산하기"):
     with summary_placeholder:
         st.markdown("<div style='font-size:1.8rem; font-weight:700;'>📢당월 수수료 요약</div>", unsafe_allow_html=True)
 
-        # 표시용 지급률 계산(요청 규칙)
-        # 1) 성과수수료 지급률 (1차년 규칙: 감소만, + 직도입 우대 %p)
-        perf_disp_rate = (base_rate * f1_first) + dr_bonus
-        perf_disp_rate_pct = int(perf_disp_rate * 100)  # 소수점 절삭
-
-        # 2) 초기정착2 지급률 (1차년 규칙: 감소만, 우대 없음)
-        init2_disp_rate = (Rmax - base_rate) * f1_first if eligible_init2 else 0.0
-        init2_disp_rate_pct = int(init2_disp_rate * 100)
-
-        # 정보 라인 구성(정착보장은 13차월 이상 숨김)
         info_lines = [
             f"- **당월환산보험료**: {int(total_converted_raw):,}P",
             f"- **당월 예상 환수성적**: {int(refund_p):,}P",
             f"- **유효환산보험료**: {int(effective_converted):,}P",
             f"- **기준 유지율**: {('해당사항없음' if _std_now_dynamic is None else str(_std_now_dynamic)+'%')}",
             f"- **현재 유지율**: {retention_1st}%",
-            f"- **성과수수료 지급률**: {perf_disp_rate_pct}%",
-            f"- **초기정착수수료2 지급률**: {init2_disp_rate_pct}%",
-            f"- **전략건강판매 건수(단가)** : {total_sh_count:g}건({sh_unit:,}원)",
         ]
+
+        # 성과 지급률(표시용)
+        perf_rate_has_base = base_rate_raw > 0  # 유효환산 70만P 미만이면 False
+        # 1차년(-구간만) 가감률 f1는 1.0/0.85/0.70
+        perf_rate_display = base_rate_raw * f1
+        perf_rate_pct = int(perf_rate_display * 100)
+
+        # 캡션(영향 요소만) — 직도입 우대는 수식은 별도로 보여주되, base_rate가 0이면 표시 안함
+        perf_caption_parts = []
+        if perf_rate_has_base:
+            if f1 != 1.0:
+                perf_caption_parts.append(f"지급률 {int(base_rate_raw*100)}% × 유지율 가감 {int(f1*100)}%")
+            # 직도입 우대 표시는 지급률이 0이 아닐 때만
+            if direct_recruits >= 1:
+                # 실제 지급률에는 +p가 반영되어 있지만, 캡션은 우대항 존재시만 표시
+                if direct_recruits == 1: dr_txt = "5%p"
+                elif direct_recruits == 2: dr_txt = "10%p"
+                else: dr_txt = "15%p"
+                # base_rate가 0일 때는 아예 표시하지 않음(요청사항)
+                if base_rate_raw > 0:
+                    if f1 != 1.0:
+                        perf_caption_parts.append(f"+ 직도입우대 {dr_txt}")
+                    else:
+                        perf_caption_parts.append(f"지급률 {int(base_rate_raw*100)}% + 직도입우대 {dr_txt}")
+
+        if perf_caption_parts:
+            info_lines.append(f"- **성과수수료 지급률**: {perf_rate_pct}%  ( * " + " ".join(perf_caption_parts) + " )")
+        else:
+            info_lines.append(f"- **성과수수료 지급률**: {perf_rate_pct}%")
+
+        # 초기정착2 지급률(표시용)
+        init2_caption_parts = []
+        if eligible_init2:
+            init2_rate_display = delta_R_raw * f1
+            init2_rate_pct = int(init2_rate_display * 100)
+            if delta_R_raw > 0:
+                if f1 != 1.0:
+                    init2_caption_parts.append(f"지급률 {int(delta_R_raw*100)}% × 유지율 가감 {int(f1*100)}%")
+                else:
+                    # 영향 없으면 수식 생략
+                    pass
+            # base_rate가 75%로 이미 최대면 초기2 발생 없음 표기(이전 요청사항 반영)
+            else:
+                init2_caption_parts = []
+
+            if init2_caption_parts:
+                info_lines.append(f"- **초기정착수수료2 지급률**: {init2_rate_pct}%  ( * " + " ".join(init2_caption_parts) + " )")
+            else:
+                info_lines.append(f"- **초기정착수수료2 지급률**: {init2_rate_pct}%")
+        else:
+            info_lines.append(f"- **초기정착수수료2 지급률**: 0%")
+
+        # 전략건강
+        info_lines.append(f"- **전략건강판매 건수(단가)** : {total_sh_count:g}건({sh_unit:,}원)")
+
+        # 정착보장수수료 보장금액 — 13차월 이상은 숨김
         if contract_months <= 12:
-            info_lines.append(f"- **정착보장수수료 보장금액**: {final_guarantee:,.0f}원")
+            if add_guarantee > 0:
+                info_lines.append(f"- **정착보장수수료 보장금액**: {final_guarantee:,.0f}원 (* 직도입 +{add_guarantee//10000:,}만원)")
+            else:
+                info_lines.append(f"- **정착보장수수료 보장금액**: {final_guarantee:,.0f}원")
 
         st.info("  \n".join(info_lines))
 
-        # ▷ 수식 캡션 (변경이 있는 경우만 노출)
-        caption_lines = []
-        # 성과수수료: 유지율 가감 또는 직도입우대가 있으면 자세히 표기
-        if (f1_first != 1.0) or (dr_bonus > 0.0):
-            base_pct = int(base_rate * 100)
-            f1_pct = int(f1_first * 100)
-            dr_pctp = int(dr_bonus * 100)
-            # 예: 지급률 70% * 유지율 가감 85% + 직도입우대 10%p
-            caption_lines.append(f"— 성과수수료 지급률 산식: 지급률 {base_pct}% × 유지율 가감 {f1_pct}% + 직도입우대 {dr_pctp}%p")
-        # 초기정착2: 유지율 가감이 있으면 표기 (우대 없음)
-        if eligible_init2 and (f1_first != 1.0):
-            delta_pct = int((Rmax - base_rate) * 100)
-            f1_pct = int(f1_first * 100)
-            caption_lines.append(f"— 초기정착2 지급률 산식: ΔR {delta_pct}% × 유지율 가감 {f1_pct}%")
-        if caption_lines:
-            st.caption("\n".join(caption_lines))
-
-        # 정착보장 비대상 사유(1~12차월, 금액 0일 때)
+        # 정착보장 비대상 사유(1~12차월에 한해 노출)
         if contract_months <= 12 and settle_bonus == 0:
             reasons_settle = []
             if final_guarantee == 0:
@@ -641,21 +604,16 @@ if st.button("📌 계산하기"):
         # 초기정착2 비대상 사유(별도 노출)
         if not eligible_init2:
             reasons_i2 = []
-            # 요청 추가: 1~12차월이면서 이미 75%면 초기정착2 없음
-            if cond_month and (base_rate >= 0.75):
-                reasons_i2.append("성과수수료 최대 지급률 달성 상태")
             if not std_activity:
                 reasons_i2.append("표준활동 미달성")
             if not cond_month:
                 reasons_i2.append("위임 13차월 이상")
             if not cond_amt_init2:
                 reasons_i2.append("유효환산 100만원 미만")
+            if cond_month and cond_amt_init2 and base_rate_raw >= 0.75 and contract_months <= 12:
+                reasons_i2.append("성과수수료 최대 지급률 달성 상태")
             if reasons_i2:
                 st.markdown("**＊ 초기정착수수료2 미산출 이유:** " + ", ".join(reasons_i2))
-
-        # 성과수수료 미산출 사유(유효환산 70만P 미만)
-        if base_rate == 0.0:
-            st.markdown("**＊ 성과수수료 미산출 이유:** 유효환산 70만원 미만(지급률 없음)")
 
         # 익월 요약
         st.markdown("<div style='font-size:1.8rem; font-weight:700; margin-top:8px;'>📢익월 예상 수수료</div>", unsafe_allow_html=True)
@@ -666,12 +624,12 @@ if st.button("📌 계산하기"):
             f"- **전략건강 보너스** : {sum_sh_bonus:,.0f}원",
         ]
         if contract_months <= 12:
-            lines.append(f"- **정착보장 수수료** : {settle_bonus:,.0f}원")  # 0원이라도 표시
+            lines.append(f"- **정착보장 수수료** : {settle_bonus:,.0f}원")
         next_month_total = sum_recruit + sum_perf1 + sum_init2_1 + sum_sh_bonus + (settle_bonus if contract_months <= 12 else 0)
         lines.append(f"\n**총합 : {next_month_total:,.0f}원**")
         st.warning("\n".join(lines))
 
-    SP(50)
+        SP(50)
 
     # ── 상품별 상세
     st.subheader("📆 상품별 예상 수수료 계산")
@@ -700,4 +658,7 @@ if st.button("📌 계산하기"):
         st.write(f"- 초기정착수수료2-3 : {r['init2_3']:,.0f}원")
 
         SP(40)
-        st.success("**＊ 성과수수료 : 지급월 기준 환산가동인 자**\n\n**＊ 초기정착수수료2 : 지급월 기준 표준활동 달성 및 유효환산 100만P 이상인 자**")
+
+
+
+        st.success("**✔️지급조건**\n\n**＊ 성과수수료 : 지급월 기준 환산가동인 자**\n\n**＊ 초기정착수수료2 : 지급월 기준 표준활동 달성 및 유효환산 100만P 이상인 자**")
